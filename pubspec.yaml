@@ -1,6 +1,6 @@
 name: betto_builder_tools
 description: A small set of tools to assist with code generation.
-version: 0.1.0-dev.1
+version: 0.1.0-dev.2
 repository: https://github.com/bettongia/builder_tools
 issue_tracker: https://github.com/bettongia/builder_tools/issues
 
