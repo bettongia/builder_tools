@@ -60,7 +60,3 @@ import 'package:betto_builder_tools/betto_builder_tools.dart';
 
 final source = dartfmt.format(generatedCode);
 ```
-
-## Additional information
-
-Please refer to [CONTRIBUTING](CONTRIBUTING).
