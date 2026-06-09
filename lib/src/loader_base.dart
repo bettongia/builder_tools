@@ -20,19 +20,38 @@ import 'package:archive/archive.dart';
 import 'package:dart_style/dart_style.dart';
 import 'package:http/http.dart' as http;
 
-/// Helper
+/// A pre-configured [DartFormatter] using the latest supported language version.
+///
+/// Use this to format generated Dart source code before writing it to disk.
 final dartfmt = DartFormatter(
   languageVersion: DartFormatter.latestLanguageVersion,
 );
 
-/// Supported compression types for downloaded files
-enum CompressionType { none, zip }
+/// Compression formats supported when fetching remote files.
+enum CompressionType {
+  /// No compression; the raw bytes are decoded directly as UTF-8.
+  none,
 
-/// Loads data from a file or URL.
+  /// ZIP archive; the target entry is extracted before decoding.
+  ///
+  /// If the archive contains multiple files, pass [loadData]'s
+  /// `archiveFilePath` parameter to identify the correct entry.
+  zip,
+}
+
+/// Returns the UTF-8 text content from [filePath], downloading it from [url]
+/// when the local file is absent or [force] is `true`.
 ///
-/// If [force] is true, the data will be loaded from the URL even if the file exists.
-/// If [compression] is [CompressionType.zip], the data will be uncompressed from a zip file.
-/// For multi-part archives, the [archiveFilePath] parameter should be used to specify the path to the archive file.
+/// After a successful download the content is written to [filePath] so
+/// subsequent calls can use the cached copy without hitting the network.
+///
+/// [compression] controls how the downloaded bytes are decoded before caching.
+/// When [compression] is [CompressionType.zip] and the archive contains more
+/// than one entry, supply [archiveFilePath] to select the correct member by
+/// its path within the archive.
+///
+/// Throws if the HTTP request returns a non-200 status, if the archive is
+/// empty, or if [archiveFilePath] does not match any entry.
 Future<String> loadData(
   String filePath,
   String url, {
@@ -100,9 +119,20 @@ Future<Uint8List> _uncompressZip(
   return fileBytes;
 }
 
+/// Reads and returns the UTF-8 content of the file at [filePath].
+///
+/// Throws a [FileSystemException] if the file does not exist or cannot be read.
 Future<String> loadFromLocalFile(String filePath) async =>
     await File(filePath).readAsString();
 
+/// Downloads [url], optionally decompresses the response according to
+/// [compression], writes the result to [cacheFile], and returns the content.
+///
+/// [archiveFilePath] is only used when [compression] is [CompressionType.zip]
+/// and selects a specific member from the archive by its internal path.
+///
+/// Throws if the HTTP request returns a non-200 status or if decompression
+/// fails.
 Future<String> loadFromUrl(
   String url,
   String cacheFile, {
